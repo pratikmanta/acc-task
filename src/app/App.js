@@ -1,33 +1,26 @@
 import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { SelectComponent } from '../components/SelectComponent';
+import {
+	getAllUsersApi,
+	getSingleUserApi,
+	putSingleUserApi
+} from '../appState/actions';
 import './App.css';
-import { SelectComponent } from './SelectComponent';
 
 const App = () => {
-	const [selected, setSelected] = useState('Select value');
-	const [usersList, setUsersList] = useState(null);
+	const dispatch = useDispatch();
+
 	const [userData, setUserData] = useState(null);
 
-	// API call to get users data
-	const handleApiCall = () => {
-		// timeout to just show data arriving and updating default selected
-		setTimeout(() => {
-			fetch('https://jsonplaceholder.typicode.com/users')
-				.then((res) => res.json())
-				.then((data) => setUsersList(data));
-		}, 1000);
-	};
+	const userItem = useSelector(
+		(state) => state.usersReducer.userItem
+	);
 
 	// Api call to get and display user data
 	const handleSelect = (event) => {
 		const userId = event.target.value;
-		fetch(`https://jsonplaceholder.typicode.com/users/${userId}`)
-			.then((res) => res.json())
-			.then((data) => {
-				setUserData(data);
-			})
-			.catch((err) => {
-				console.log({ err });
-			});
+		getSingleUserApi(dispatch, userId);
 	};
 
 	const handleEmailChange = (event) => {
@@ -51,39 +44,23 @@ const App = () => {
 
 	// Post handler check in console for status
 	const handlePostData = (data) => {
-		const payload = JSON.stringify(data);
-
-		fetch(`https://jsonplaceholder.typicode.com/users/${data.id}`, {
-			method: 'PUT',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: payload
-		})
-			.then((response) => {
-				alert('Updated data');
-				console.log(response);
-			})
-			.catch((err) => {
-				console.log('err', err);
-			});
+		putSingleUserApi(data);
 	};
 
 	useEffect(() => {
-		handleApiCall();
-	}, []);
+		getAllUsersApi(dispatch);
+		if (userItem && userItem.id) {
+			setUserData(userItem);
+		}
+	}, [userItem, dispatch]);
 
 	return (
 		<div className='App'>
 			<h1>React Task</h1>
-			<SelectComponent
-				handleSelect={handleSelect}
-				users={usersList}
-				selected={selected}
-			/>
+			<SelectComponent handleSelect={handleSelect} />
 			<br />
 			<br />
-			{userData !== null && userData.id ? (
+			{userData !== null ? (
 				<>
 					<div className='input-box'>
 						<label htmlFor='email'>Email</label>
